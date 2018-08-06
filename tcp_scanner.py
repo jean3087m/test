@@ -1,6 +1,9 @@
 import optparse
 from socket import *
 import socket
+from threading import *
+
+screenLock = Semaphore(value=1)
 
 
 def connScan(tgtHost, tgtPort):
@@ -9,13 +12,19 @@ def connScan(tgtHost, tgtPort):
         connSkt.connect((tgtHost, tgtPort))
         connSkt.send('Violent python\r\n')
         results = connSkt.recv(100)
-         
+
+        screenLock.acquire()
+
         print '[+] %d/tcp open' % tgtPort
         print '\n[+] ' + str(results)
 
         connSkt.close()
     except:
+        screenLock.acquire()
         print '[-] %d/tcp closed' % tgtPort
+    finally:
+        screenLock.close()
+
 
 def portScan(tgtHost, tgtPorts):
     try:
@@ -32,21 +41,22 @@ def portScan(tgtHost, tgtPorts):
 
     for tgtPort in tgtPorts:
         print 'Scanning port ' + tgtPort
-        connScan(tgtHost, tgtPort)
+        t = Thread(target=connScan, args=(tgtHost, int(tgtPort)))
+        t.start()
 
 def main():
 
     parser = optparse.OptionParser('usage %prog -H + <targethost> -p <targetport>')
     parser.add_option('-H', dest='tgtHost', type='string', help='specify target host')
-    parser.add_option('-p', dest='tgtPort', type='int', help='specify target port')
+    parser.add_option('-p', dest='tgtPorts', type='string', help='specify target port')
 
     (options, args) = parser.parse_args()
     tgtHost = options.tgtHost
-    tgtPort = options.tgtPort
-    if tgtHost == None or tgtPort == None:
+    tgtPorts = options.tgtPorts
+    if tgtHost == None or tgtPort[0] == None:
         print parse.usage
         exit(0)
-    portScan(tgtHost, tgtPort)
+    portScan(tgtHost, tgtPorts)
 
 
 if __name__ == '__main__':
