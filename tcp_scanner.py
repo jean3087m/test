@@ -46,7 +46,7 @@ def main():
     if tgtHost == None or tgtPort == None:
         print parse.usage
         exit(0)
-    portScan(tgtHost, tgtPorts)
+    portScan(tgtHost, tgtPort)
 
 
 if __name__ == '__main__':
